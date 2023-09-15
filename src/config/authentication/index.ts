@@ -1,4 +1,4 @@
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, User, signInWithPopup } from "firebase/auth";
 import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { auth, db } from "../firebase";
 const provider = new GoogleAuthProvider();
@@ -20,18 +20,37 @@ export const signInWithGoogle = async () => {
             photoURL: result.user?.photoURL,
             accessToken: credential.accessToken
         }
-        console.log({user})
         const userQuerySnap = query(collection(db, 'users'), where('email', '==', user.email))
         const userQuerySnapList = await getDocs(userQuerySnap)
 
         if(userQuerySnapList.empty) {
             await addDoc(collection(db, 'users'), user)
         }
-
         return user.uid 
-    } catch (error) {
-        console.log(error)
-        // console.log({x: error.code, y: error.message})
-        throw new Error('Ocurrió un error')
+    } catch (error: any) {
+        throw new Error('Ocurrió un error' + error.message)
     }
+}
+
+export const getUser = async (): Promise<null | User> => {
+    try {
+        const tokenId = await auth.currentUser?.getIdToken()
+
+        if(!tokenId) {
+            return null
+        }
+
+        const user = auth.currentUser
+        
+        if(!user) {
+            throw new Error('No se pudo obtener el usuario')
+        }
+        return user
+    } catch (error: any) {
+        throw new Error('Ocurrió un error' + error.message)
+    }
+}
+
+export const logout = async() => {
+    await auth.signOut()
 }
