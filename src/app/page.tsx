@@ -1,8 +1,30 @@
 "use client";
 import GoogleAuthButton from "@/components/ui/buttons/GoogleAuthButton";
 import { auth } from "@/config/firebase";
+import { saveSesion } from "@/redux/features/userSlice";
+import { useAppSelector } from "@/redux/hooks";
+import { onAuthStateChanged } from "firebase/auth";
+import { useEffect } from "react";
+import { useSignInWithGoogle } from "react-firebase-hooks/auth";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function Home() {
+  const [signInWithGoogle, user, loading, error] = useSignInWithGoogle(auth);
+  const userLoged = useAppSelector((state) => state.userReducer);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    onAuthStateChanged(auth, (userAuth) => {
+      if (userAuth) {
+        dispatch(
+          saveSesion({
+            email: userAuth.email,
+            uid: userAuth.uid,
+          })
+        );
+      }
+    });
+  });
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-orange-40">
       <div
@@ -32,7 +54,12 @@ export default function Home() {
         </h3>
         <div className="flex flex-row items-center gap-2">
           <p className="text-gray-700 font-semibold">¿Qué esperas?</p>
-          <GoogleAuthButton text="Comienza con Google" />
+          {!userLoged.uid && (
+            <GoogleAuthButton
+              text="Comienza con Google"
+              onClick={() => signInWithGoogle}
+            />
+          )}
         </div>
       </div>
     </main>

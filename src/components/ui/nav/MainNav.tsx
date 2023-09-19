@@ -2,8 +2,12 @@
 import Image from "next/image";
 import { getUser } from "@/config/authentication";
 import Link from "next/link";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/config/firebase";
 
 const MainNav = () => {
+  const [user, loading, error] = useAuthState(auth);
+  
   return (
     <nav className="w-full h-14 border-b-slate-400 fixed top-0 flex flex-row items-center justify-center">
       <Link href={"/"} className="cursor-pointer">

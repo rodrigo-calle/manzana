@@ -1,8 +1,11 @@
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { auth } from "@/config/firebase";
 import { Button } from "./Button";
-import { useSignInWithGoogle } from "react-firebase-hooks/auth";
+
+import { useSignInWithGoogle, useSignOut } from "react-firebase-hooks/auth";
 type GoogleAuthButtonProps = {
   text?: string;
+  onClick: () => void;
 };
 
 const googleSvgIcon = (
@@ -58,10 +61,8 @@ const googleSvgIcon = (
 );
 
 const GoogleAuthButton = (props: GoogleAuthButtonProps) => {
-  const [signInWithGoogle, user, loading, error] = useSignInWithGoogle(auth);
-
   return (
-    <Button onClick={() => signInWithGoogle()}>
+    <Button onClick={props.onClick}>
       {googleSvgIcon}
       <span>{props.text ? props.text : "Continua con Google"}</span>
     </Button>
