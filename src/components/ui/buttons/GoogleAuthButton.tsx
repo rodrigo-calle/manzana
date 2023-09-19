@@ -1,7 +1,7 @@
+import { auth } from "@/config/firebase";
 import { Button } from "./Button";
-
+import { useSignInWithGoogle } from "react-firebase-hooks/auth";
 type GoogleAuthButtonProps = {
-  onClick: () => void;
   text?: string;
 };
 
@@ -17,13 +17,7 @@ const googleSvgIcon = (
   >
     {" "}
     <title>Google-color</title> <desc>Created with Sketch.</desc> <defs> </defs>{" "}
-    <g
-      id="Icons"
-      stroke="none"
-      strokeWidth="1"
-      fill="none"
-      fillRule="evenodd"
-    >
+    <g id="Icons" stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
       {" "}
       <g id="Color-" transform="translate(-401.000000, -860.000000)">
         {" "}
@@ -64,8 +58,10 @@ const googleSvgIcon = (
 );
 
 const GoogleAuthButton = (props: GoogleAuthButtonProps) => {
+  const [signInWithGoogle, user, loading, error] = useSignInWithGoogle(auth);
+
   return (
-    <Button onClick={props.onClick}>
+    <Button onClick={() => signInWithGoogle()}>
       {googleSvgIcon}
       <span>{props.text ? props.text : "Continua con Google"}</span>
     </Button>

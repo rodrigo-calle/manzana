@@ -1,11 +1,8 @@
 "use client";
-import { Button } from "@/components/ui/buttons/Button";
 import GoogleAuthButton from "@/components/ui/buttons/GoogleAuthButton";
-import { getUser, signInWithGoogle } from "@/config/authentication";
 import { auth } from "@/config/firebase";
 
 export default function Home() {
-  console.log({ user: auth.currentUser });
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-orange-40">
       <div
@@ -35,11 +32,7 @@ export default function Home() {
         </h3>
         <div className="flex flex-row items-center gap-2">
           <p className="text-gray-700 font-semibold">¿Qué esperas?</p>
-          <GoogleAuthButton
-            text="Comienza con Google"
-            onClick={signInWithGoogle}
-          />
-          <Button onClick={getUser}>Logout</Button>
+          <GoogleAuthButton text="Comienza con Google" />
         </div>
       </div>
     </main>
