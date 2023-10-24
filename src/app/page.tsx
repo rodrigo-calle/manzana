@@ -1,30 +1,42 @@
 "use client";
 import GoogleAuthButton from "@/components/ui/buttons/GoogleAuthButton";
 import { auth } from "@/config/firebase";
-import { saveSesion } from "@/redux/features/userSlice";
+import { saveSesion } from "@/redux/features/auth/authSlice/auth";
 import { useAppSelector } from "@/redux/hooks";
+import { registerUserHandler } from "@/utils/firestoreUtils";
 import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSignInWithGoogle } from "react-firebase-hooks/auth";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 export default function Home() {
-  const [signInWithGoogle, user, loading, error] = useSignInWithGoogle(auth);
-  const userLoged = useAppSelector((state) => state.userReducer);
+  const [signInWithGoogle, _user, _loading, _error] = useSignInWithGoogle(auth);
+  const router = useRouter();
+  const user = useAppSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    onAuthStateChanged(auth, (userAuth) => {
-      if (userAuth) {
+    onAuthStateChanged(auth, async (userAuth) => {
+      if (userAuth && userAuth.email) {
+        await registerUserHandler(userAuth.email, userAuth.photoURL || "");
         dispatch(
           saveSesion({
-            email: userAuth.email,
-            uid: userAuth.uid,
+            loading: false,
+            userInfo: {
+              email: userAuth.email,
+              uid: userAuth.uid,
+            },
+            userToken: userAuth.refreshToken,
+            success: true,
           })
         );
       }
     });
-  });
+  }, [dispatch, _user]);
+
+  if (user && user.success) router.push("/projects");
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-orange-40">
       <div
@@ -54,10 +66,10 @@ export default function Home() {
         </h3>
         <div className="flex flex-row items-center gap-2">
           <p className="text-gray-700 font-semibold">¿Qué esperas?</p>
-          {!userLoged.uid && (
+          {!_user && (
             <GoogleAuthButton
               text="Comienza con Google"
-              onClick={() => signInWithGoogle}
+              onLogin={() => signInWithGoogle()}
             />
           )}
         </div>

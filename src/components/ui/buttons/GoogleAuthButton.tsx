@@ -5,7 +5,7 @@ import { Button } from "./Button";
 import { useSignInWithGoogle, useSignOut } from "react-firebase-hooks/auth";
 type GoogleAuthButtonProps = {
   text?: string;
-  onClick: () => void;
+  onLogin: () => void;
 };
 
 const googleSvgIcon = (
@@ -62,7 +62,7 @@ const googleSvgIcon = (
 
 const GoogleAuthButton = (props: GoogleAuthButtonProps) => {
   return (
-    <Button onClick={props.onClick}>
+    <Button onClick={props.onLogin}>
       {googleSvgIcon}
       <span>{props.text ? props.text : "Continua con Google"}</span>
     </Button>
