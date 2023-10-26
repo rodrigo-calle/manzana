@@ -22,12 +22,11 @@ const MainNav = () => {
 
   const handleSignOut = () => {
     dispatch(removeSesion({}));
-    auth.signOut();
-    router.push("/");
+    auth.signOut().then(() => router.push("/"));
   };
 
   return (
-    <nav className="w-full h-14 border-b-slate-400 fixed top-0 flex flex-row items-center justify-center">
+    <nav className="w-full h-14 border-b-slate-400 fixed top-0 flex flex-row items-center justify-center bg-white">
       <Link href={"/"} className="cursor-pointer">
         <div className="flex flex-row items-center w-11/12">
           <Image
@@ -55,8 +54,8 @@ const MainNav = () => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mr-8 rounded-md">
-              <DropdownMenuLabel>Mi Perfil</DropdownMenuLabel>
-              <DropdownMenuLabel>Mis Proyectos</DropdownMenuLabel>
+              <DropdownMenuLabel onClick={() => router.push('/profile')}>Mi Perfil</DropdownMenuLabel>
+              <DropdownMenuLabel onClick={() => router.push('/projects')}>Mis Proyectos</DropdownMenuLabel>
               <DropdownMenuSeparator className="w-10 border-b-slate-500" />
               <DropdownMenuLabel
                 className="cursor-pointer"

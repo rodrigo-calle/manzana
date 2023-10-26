@@ -7,7 +7,7 @@ const Profile = () => {
   const userLoged = useAppSelector((state) => state.auth);
   const router = useRouter();
 
-  if (!userLoged.success) router.push("/");
+  // if (!userLoged.success) router.push("/");
 
   return <div>Profile</div>;
 };
