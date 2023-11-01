@@ -3,7 +3,6 @@ import * as React from "react";
 import { Button } from "@/components/ui/buttons/Button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -19,7 +18,6 @@ import {
 } from "@/components/ui/dialog/Dialog";
 import {
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,7 +25,7 @@ import {
 } from "@/components/ui/form/Form";
 import { Input } from "@/components/ui/input/Input";
 import { Textarea } from "@/components/ui/textArea/TextArea";
-import { Form, FormProvider, useForm } from "react-hook-form";
+import { Form, FormProvider, set, useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -37,48 +35,46 @@ import {
   DocumentReference,
   where,
   query,
-  getDoc,
   getDocs,
+  DocumentData,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
-import { db } from "@/config/firebase";
+import { auth, db } from "@/config/firebase";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert/Alert";
-import { useAppSelector } from "@/redux/hooks";
+import { useAuthState } from "react-firebase-hooks/auth";
+import Loader from "@/components/ui/loader/Loader";
+import { useRouter } from "next/navigation";
+import { Trash } from "@phosphor-icons/react/dist/ssr/Trash";
+import { ArrowSquareOut, Pencil } from "@phosphor-icons/react";
+import CustomTooltip from "@/components/ui/tootip/Tooltip";
+import Link from "next/link";
 
 type DialogProps = {
   open: boolean;
-  // userRef: DocumentReference;
-  user: string | null;
+  userRef: DocumentReference<DocumentData, DocumentData> | undefined;
+  type: "new" | "edit";
+  projectRef?: DocumentReference<DocumentData, DocumentData>;
   onClose: () => void;
 };
 
-// const RegisterForm = () => {
-//   const form = useForm();
-//   return (
-//     <Form>
-//       <FormField
-//         // control={...}
-//         name="..."
-//         render={() => (
-//           <FormItem>
-//             <FormLabel />
-//             <FormControl>{/* Your form field */}</FormControl>
-//             <FormDescription />
-//             <FormMessage />
-//           </FormItem>
-//         )}
-//       />
-//     </Form>
-//   );
-// };
+type ProjectRegister = {
+  reference: DocumentReference<DocumentData, DocumentData>;
+  name: string;
+  description: string;
+  createdAt: Timestamp;
+};
 
 const RegisterProjectsDialog = (props: DialogProps) => {
+  const { open, onClose, userRef, type, projectRef } = props;
   const [displayAlert, setDisplayAlert] = React.useState(false);
-  const { open, onClose, user } = props;
-  console.log({ user });
+
   const newProjectSchema = z.object({
     name: z.string().min(3, "Too Short!").max(50, "Too Long!"),
     description: z.string().min(3, "Too Short!").max(50, "Too Long!"),
@@ -92,31 +88,57 @@ const RegisterProjectsDialog = (props: DialogProps) => {
     },
   });
 
+  React.useEffect(() => {
+    const gettingProjectValues = async () => {
+      if (!projectRef) return;
+
+      const projectDoc = await getDoc(projectRef);
+
+      const data = projectDoc.data();
+
+      if (!data) return;
+
+      const { name, description } = data;
+
+      form.setValue("name", name);
+      form.setValue("description", description);
+    };
+
+    if (type === "edit" && projectRef) {
+      gettingProjectValues();
+    }
+  }, [form, projectRef, type]);
+
   const onSave = async (values: z.infer<typeof newProjectSchema>) => {
     const { name, description } = values;
 
-    const q = query(collection(db, "users"), where("email", "==", user));
-    const userDocs = await getDocs(q);
-    const userRef = userDocs.docs[0]?.ref;
+    if (type === "edit" && projectRef) {
+      setDisplayAlert(true);
+      await updateDoc(projectRef, {
+        ...values,
+      });
+      onClose();
+      setTimeout(() => {
+        setDisplayAlert(false);
+      }, 4000);
+    } else {
+      if (!userRef) return;
 
-    if (!userRef) return;
+      const newProject = {
+        name,
+        description,
+        user: userRef,
+        createdAt: Timestamp.now(),
+      };
 
-    const newProject = {
-      name,
-      description,
-      user: userRef,
-      createdAt: Timestamp.now(),
-    };
-
-    console.log({ newProject });
-
-    await addDoc(collection(db, "habits"), newProject);
-    setDisplayAlert(true);
-    form.reset();
-    onClose();
-    setTimeout(() => {
-      setDisplayAlert(false);
-    }, 4000);
+      await addDoc(collection(db, "habits"), newProject);
+      setDisplayAlert(true);
+      form.reset();
+      onClose();
+      setTimeout(() => {
+        setDisplayAlert(false);
+      }, 4000);
+    }
   };
 
   return (
@@ -127,9 +149,14 @@ const RegisterProjectsDialog = (props: DialogProps) => {
           className="border-green-500 w-96 mt-12 absolute border-2 bg-green-200 left-1/2 transform -translate-x-1/2 "
           style={{ borderRadius: "10px" }}
         >
-          <AlertTitle>Nuevo habito creado</AlertTitle>
+          <AlertTitle>
+            {(type === "edit" && "Proyecto actualizado correctamente") ||
+              "Proyecto registrado correctamente"}
+          </AlertTitle>
           <AlertDescription>
-            Es el comienzo de algo grande, tú puedes!! 🚀
+            {(type === "edit" &&
+              "El proyecto se ha actualizado correctamente") ||
+              "El proyecto se ha registrado correctamente"}
           </AlertDescription>
         </Alert>
       )}
@@ -138,10 +165,12 @@ const RegisterProjectsDialog = (props: DialogProps) => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-center">
-              Registrar un nuevo proyecto
+              {type === "edit" ? "Editar proyecto" : "Nuevo proyecto"}
             </DialogTitle>
             <DialogDescription>
-              Esto es el comienzo de algo grande 🚀.
+              {type === "edit"
+                ? "Edite el proyecto que desea modificar"
+                : "Registre un nuevo proyecto, Esto es el comienzo de algo grande 🚀 "}
             </DialogDescription>
             <FormProvider {...form}>
               <form onSubmit={form.handleSubmit(onSave)}>
@@ -216,16 +245,95 @@ const RegisterProjectsDialog = (props: DialogProps) => {
 };
 
 const Projects = () => {
-  const user = useAppSelector((state) => state.auth);
-
+  const [userRef, setUseRef] = React.useState<DocumentReference>();
+  const [projects, setProjects] = React.useState<ProjectRegister[]>([]);
+  const router = useRouter();
+  const [displayAlert, setDisplayAlert] = React.useState(false);
+  const [user, loading, error] = useAuthState(auth);
   const [open, setOpen] = React.useState(false);
+  const [openEdit, setOpenEdit] = React.useState(false);
+  const [projectsLoader, setProjectsLoader] = React.useState(false);
+  const [projectRef, setProjectRef] = React.useState<
+    DocumentReference | undefined
+  >(undefined);
+
+  const getUserReference = async (userEmail: string) => {
+    const q = query(collection(db, "users"), where("email", "==", userEmail));
+    const userDocs = await getDocs(q);
+
+    const usertRef = userDocs.docs[0]?.ref;
+    return usertRef;
+  };
+
+  const deleteProject = (projectRef: DocumentReference) => {
+    deleteDoc(projectRef).then(() => {
+      window.location.reload();
+    });
+  };
+
+  React.useEffect(() => {
+    if (user && user.email) {
+      getUserReference(user.email).then((userRef) => {
+        setUseRef(userRef);
+      });
+    }
+
+    if (error) {
+      setDisplayAlert(true);
+      setTimeout(() => {
+        setDisplayAlert(false);
+      }, 4000);
+    }
+  }, [error, user]);
+
+  React.useEffect(() => {
+    const getProjects = async (): Promise<void> => {
+      setProjectsLoader(true);
+      if (!userRef) return;
+
+      const q = query(collection(db, "habits"), where("user", "==", userRef));
+
+      const habits = await getDocs(q);
+
+      if (!habits.empty) {
+        const projectList = habits.docs.map((doc) => {
+          const data = doc.data();
+
+          const dataToSave: ProjectRegister = {
+            reference: doc.ref,
+            name: data.name,
+            description: data.description,
+            createdAt: data.createdAt,
+          };
+          return dataToSave;
+        });
+        setProjects(projectList);
+      }
+      setProjectsLoader(false);
+    };
+    if (!openEdit || !open) {
+      getProjects();
+    }
+  }, [open, openEdit, userRef]);
+
+  if (loading) return <Loader />;
+
+  if (!user || !user.email) return router.push("/");
 
   return (
     <>
       <RegisterProjectsDialog
+        type="new"
         open={open}
         onClose={() => setOpen(!open)}
-        user={user}
+        userRef={userRef}
+      />
+      <RegisterProjectsDialog
+        type="edit"
+        open={openEdit}
+        onClose={() => setOpenEdit(!openEdit)}
+        userRef={userRef}
+        projectRef={projectRef}
       />
       <div className="pt-14 bg-slate-100 h-screen w-full px-4">
         <h1 className="text-2xl font-bold mt-5">Mis Proyectos</h1>
@@ -236,21 +344,58 @@ const Projects = () => {
           Crear Nuevo Proyecto
         </Button>
         <div className="w-full mt-5 border-2 border-slate-300 rounded-md" />
-        <ul className="w-full h-fit mt-5 flex flex-row justify-between items-center">
-          <li className="w-72 h-fit">
-            <Card className="h-full bg-white">
-              <CardHeader>
-                <CardTitle>Card Title</CardTitle>
-                <CardDescription>Card Description</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Card Content</p>
-              </CardContent>
-              <CardFooter>
-                <p>Card Footer</p>
-              </CardFooter>
-            </Card>
-          </li>
+        <ul className="w-full h-fit mt-5 flex flex-row justify-start items-center gap-5 flex-wrap">
+          {user &&
+            userRef &&
+            projects.length > 0 &&
+            projects.map((project, index) => (
+              <li className="w-72 h-fit" key={index}>
+                <Card className="h-full bg-white">
+                  <CardHeader>
+                    <CardTitle>{project.name}</CardTitle>
+                    <CardDescription>{project.description}</CardDescription>
+                  </CardHeader>
+                  <CardFooter className="flex w-full flex-row justify-end gap-2">
+                    <CustomTooltip hover="Eliminar">
+                      <Button
+                        className="rounded-full w-9 h-9 p-0"
+                        onClick={() => deleteProject(project.reference)}
+                      >
+                        <Trash size={24} className="text-red-400" />
+                      </Button>
+                    </CustomTooltip>
+                    <CustomTooltip hover="Editar">
+                      <Button
+                        className="rounded-full w-9 h-9 p-0"
+                        onClick={() => {
+                          setProjectRef(project.reference);
+                          setOpenEdit(true);
+                        }}
+                      >
+                        <Pencil size={24} className="text-green-400" />
+                      </Button>{" "}
+                    </CustomTooltip>
+                    <CustomTooltip hover="Ver Hábito">
+                      <Link href={`/projects/${project.reference.id}`}>
+                        <Button className="rounded-full w-9 h-9 p-0">
+                          <ArrowSquareOut size={24} className="text-blue-400" />
+                        </Button>
+                      </Link>
+                    </CustomTooltip>
+                  </CardFooter>
+                </Card>
+              </li>
+            ))}{" "}
+          {projectsLoader && (
+            <div className="w-full h-full flex justify-center items-center">
+              <Loader />
+            </div>
+          )}
+          {projects.length === 0 && !projectsLoader && (
+            <p className="w-full text-center">
+              No hay proyectos registrados, registre uno
+            </p>
+          )}
         </ul>
       </div>
     </>
