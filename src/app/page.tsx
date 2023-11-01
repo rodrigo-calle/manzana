@@ -1,19 +1,23 @@
 "use client";
+import CustomAlert from "@/components/ui/alert/CustomAlert";
 import GoogleAuthButton from "@/components/ui/buttons/GoogleAuthButton";
+import Loader from "@/components/ui/loader/Loader";
 import { auth } from "@/config/firebase";
 import { saveSesion } from "@/redux/features/auth/authSlice/auth";
 import { useAppSelector } from "@/redux/hooks";
 import { registerUserHandler } from "@/utils/firestoreUtils";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useSignInWithGoogle } from "react-firebase-hooks/auth";
+import { useEffect, useState } from "react";
+import { useAuthState, useSignInWithGoogle } from "react-firebase-hooks/auth";
 import { useDispatch } from "react-redux";
 
 export default function Home() {
-  const [signInWithGoogle, _user, _loading, _error] = useSignInWithGoogle(auth);
+  const [signInWithGoogle, _user, loading, error] = useSignInWithGoogle(auth);
+  const [user, _loading, _error] = useAuthState(auth);
+
+  const [displayAlert, setDisplayAlert] = useState(false);
   const router = useRouter();
-  const user = useAppSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -33,12 +37,33 @@ export default function Home() {
         );
       }
     });
-  }, [dispatch, _user]);
 
-  if (user && user.success) router.push("/projects");
+    if (error) {
+      setDisplayAlert(true);
+      setTimeout(() => {
+        setDisplayAlert(false);
+      }, 4000);
+    }
+  }, [dispatch, user, error, router]);
+
+  if (loading) {
+    return <Loader />;
+  }
+  console.log({ user });
+  if (user) router.push("/projects");
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-orange-40">
+      {displayAlert && (
+        <CustomAlert
+          kind="error"
+          title="Error"
+          description={
+            error?.message ||
+            "Error al iniciar sesión, por favor intente de nuevo"
+          }
+        />
+      )}
       <div
         className="w-96 h-96 rounded-[50%] bg-red-400 fixed -top-24 -right-24 opacity-10 "
         style={{ borderRadius: "78% 22% 53% 29% / 78% 22% 53% 29%" }}
@@ -66,7 +91,7 @@ export default function Home() {
         </h3>
         <div className="flex flex-row items-center gap-2">
           <p className="text-gray-700 font-semibold">¿Qué esperas?</p>
-          {!_user && (
+          {!user && (
             <GoogleAuthButton
               text="Comienza con Google"
               onLogin={() => signInWithGoogle()}
