@@ -129,6 +129,7 @@ const RegisterProjectsDialog = (props: DialogProps) => {
         description,
         user: userRef,
         createdAt: Timestamp.now(),
+        tasks: [],
       };
 
       await addDoc(collection(db, "habits"), newProject);

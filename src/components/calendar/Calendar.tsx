@@ -1,7 +1,9 @@
+import { Timestamp } from "firebase/firestore";
 import React from "react";
 
 type CalendarProps = {
   handlerDay: (day: Date) => void;
+  setCurrentActivityDay: (day: Timestamp) => void;
 };
 
 type CalendarBodyDay = {
@@ -113,9 +115,14 @@ const Calendar = (props: CalendarProps) => {
     const dateSelectedIsBeforeToTheCurrentDate = dayParsed < currentDayParsed;
 
     if (dateSelectedIsBeforeToTheCurrentDate) return;
-
+    console.log({ day });
     props.handlerDay(day.date);
-
+    // date to firestore timestamp
+    const timestamp = Timestamp.fromDate(day.date);
+    // firestore timestamp to date
+    const date = timestamp.toDate();
+    // console.log({ date, timestamp });
+    props.setCurrentActivityDay(timestamp);
     setCurrentDay(new Date(day.year, day.month, day.number));
   };
 
