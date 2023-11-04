@@ -1,9 +1,26 @@
 import { Timestamp } from "firebase/firestore";
 import React from "react";
 
+type TaskList = {
+  name: string;
+  description: string;
+  createdAt: Timestamp;
+}[];
+
+type ActivitySubcollection = {
+  activities: TaskList;
+  notes: string;
+  media: Array<{
+    url: string;
+    type: string;
+  }>;
+  date: Timestamp;
+};
+
 type CalendarProps = {
   handlerDay: (day: Date) => void;
   setCurrentActivityDay: (day: Timestamp) => void;
+  activity: ActivitySubcollection | null;
 };
 
 type CalendarBodyDay = {
@@ -107,15 +124,12 @@ const Calendar = (props: CalendarProps) => {
     "Diciembre",
   ];
 
-  const changeCurrentDay = (day: CalendarBodyDay) => {
+  const changeCurrentDay = async (day: CalendarBodyDay) => {
     const currentDay = new Date();
     const dayParsed = new Date(day.date.toDateString());
     const currentDayParsed = new Date(currentDay.toDateString());
-
     const dateSelectedIsBeforeToTheCurrentDate = dayParsed < currentDayParsed;
-
     if (dateSelectedIsBeforeToTheCurrentDate) return;
-    console.log({ day });
     props.handlerDay(day.date);
     // date to firestore timestamp
     const timestamp = Timestamp.fromDate(day.date);

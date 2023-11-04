@@ -1,5 +1,7 @@
 "use client";
 import { db } from "@/config/firebase";
+import { Cloudinary } from "@cloudinary/url-gen";
+import axios from "axios";
 import {
   DocumentReference,
   Timestamp,
@@ -40,7 +42,7 @@ import { Textarea } from "@/components/ui/textArea/TextArea";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Trash } from "@phosphor-icons/react/dist/ssr/Trash";
-import { Eye, PlusCircle, X } from "@phosphor-icons/react";
+import { CloudArrowUp, Eye, PlusCircle, X } from "@phosphor-icons/react";
 import {
   Select,
   SelectContent,
@@ -49,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select/Select";
 import { uuid } from "uuidv4";
+import Image from "next/image";
 
 type TaskList = {
   name: string;
@@ -70,7 +73,17 @@ type ModalFormProps = {
   type?: "edit" | "new";
 };
 
-type TaskModal = {
+type ActivitySubcollection = {
+  activities: TaskList;
+  notes: string;
+  media: Array<{
+    url: string;
+    type: string;
+  }>;
+  date: Timestamp;
+};
+
+type TaskModalType = {
   projectId: string;
   currentActibityDay: Timestamp;
   taskList: TaskList;
@@ -80,16 +93,10 @@ type TaskModal = {
   setOpenTaskModal: (openTaskModal: boolean) => void;
 };
 
-type ActivitySubcollection = {
-  activities: TaskList;
-  notes: string;
-  media: Array<string>;
-  date: Timestamp;
-};
-
 const ModalForm = (props: ModalFormProps) => {
   const params = useParams();
   const { openModal, setOpenModal, type } = props;
+  const cld = new Cloudinary({ cloud: { cloudName: "da7ov8jyp" } });
 
   const newProjectSchema = z.object({
     name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
@@ -137,7 +144,7 @@ const ModalForm = (props: ModalFormProps) => {
       {openModal && (
         <Dialog open={openModal} onOpenChange={setOpenModal}>
           <div className="bg-white">
-            <DialogTrigger>Open</DialogTrigger>
+            {/* <DialogTrigger>Open</DialogTrigger> */}
             <DialogContent className="bg-white">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold text-center">
@@ -222,8 +229,7 @@ const ModalForm = (props: ModalFormProps) => {
   );
 };
 
-const TaskModal = (props: TaskModal) => {
-  const [preview, setPreview] = React.useState<string>("");
+const TaskModal = (props: TaskModalType) => {
   const {
     openTaskModal,
     setOpenTaskModal,
@@ -233,6 +239,12 @@ const TaskModal = (props: TaskModal) => {
     currentActibityDay,
     projectId,
   } = props;
+  const [fileDataPreview, setFileDataPreview] = React.useState<
+    {
+      url: string;
+      type: string;
+    }[]
+  >(currentActivity?.media || []);
   const currentReadableDay = new Date().toLocaleDateString();
   const dayActivitySchema = z.object({
     activities: z.array(
@@ -246,7 +258,7 @@ const TaskModal = (props: TaskModal) => {
       })
     ),
     notes: z.string(),
-    media: z.array(z.string()).or(z.string()).or(z.any()),
+    media: z.array(z.object({ url: z.string(), type: z.string() })),
     date: z.object({
       seconds: z.number(),
       nanoseconds: z.number(),
@@ -316,10 +328,12 @@ const TaskModal = (props: TaskModal) => {
   const onSaveChanges = async (values: z.infer<typeof dayActivitySchema>) => {
     if (!currentActivity) return;
 
+    console.log({ values, t: values.media.length });
+
     const subcollectionActivity: ActivitySubcollection = {
       activities: currentActivity?.activities,
       notes: currentActivity?.notes || values.notes,
-      media: [],
+      media: fileDataPreview,
       date: currentActibityDay,
     };
 
@@ -350,7 +364,7 @@ const TaskModal = (props: TaskModal) => {
 
   return (
     <Dialog open={openTaskModal} onOpenChange={setOpenTaskModal}>
-      <DialogTrigger>Open</DialogTrigger>
+      {/* <DialogTrigger>Open</DialogTrigger> */}
       <DialogContent className="bg-white">
         <DialogHeader>
           <DialogTitle>{currentReadableDay}</DialogTitle>
@@ -397,7 +411,9 @@ const TaskModal = (props: TaskModal) => {
                       name="media"
                       render={({ field: { onChange, value, ...field } }) => (
                         <FormItem>
-                          <FormLabel>Imagenes o videos del día:</FormLabel>
+                          <FormLabel htmlFor="dropzone-file">
+                            Imagenes o videos del día:
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="file"
@@ -406,8 +422,47 @@ const TaskModal = (props: TaskModal) => {
                               onChange={(event) => {
                                 const { files, displayUrl } =
                                   getImageData(event);
-                                setPreview(displayUrl);
-                                onChange(files);
+
+                                Array.from(files).map((file: any) => {
+                                  console.log({ file, x: typeof file });
+
+                                  const formData = new FormData();
+                                  formData.append("file", file);
+                                  formData.append(
+                                    "tags",
+                                    `codeinfuse, medium, gist`
+                                  );
+                                  formData.append("upload_preset", "manzana");
+                                  formData.append("api_key", "568425813991547");
+                                  formData.append(
+                                    "timestamp",
+                                    String(Date.now() / 1000)
+                                  );
+                                  axios
+                                    .post(
+                                      "https://api.cloudinary.com/v1_1/da7ov8jyp/image/upload",
+                                      formData,
+                                      {
+                                        headers: {
+                                          "X-Requested-With": "XMLHttpRequest",
+                                        },
+                                      }
+                                    )
+                                    .then((response) => {
+                                      const data = response.data;
+                                      const fileUrl = data.secure_url;
+                                      console.log(fileUrl);
+                                      setFileDataPreview((prev) => [
+                                        ...prev,
+                                        {
+                                          url: fileUrl,
+                                          type: file.type,
+                                        },
+                                      ]);
+                                    })
+                                    .catch((err) => console.log(err));
+                                });
+                                onChange(fileDataPreview);
                               }}
                             />
                           </FormControl>
@@ -419,7 +474,35 @@ const TaskModal = (props: TaskModal) => {
                 </FormItem>
               )}
             />
-
+            <div className="w-full cursor-zoom-in flex flex-row flex-wrap gap-2 mt-3">
+              {fileDataPreview.length > 0 &&
+                fileDataPreview.map((file, index) => {
+                  if (file.type.includes("image")) {
+                    return (
+                      <Image
+                        key={index}
+                        src={file.url}
+                        alt="Picture of the author"
+                        width={100}
+                        height={100}
+                        className="h-32 w-32 object-cover"
+                      />
+                    );
+                  } else {
+                    return (
+                      <video key={index} className="cursor-zoom-in">
+                        <source
+                          src={file.url}
+                          width={100}
+                          height={100}
+                          className="h-32 w-32 object-cover"
+                          type={file.type}
+                        />
+                      </video>
+                    );
+                  }
+                })}
+            </div>
             <div className="py-2 w-full">
               <Select onValueChange={(e) => onSelectTaskHandler(e)}>
                 <SelectTrigger className="w-full">
@@ -471,7 +554,6 @@ const TaskModal = (props: TaskModal) => {
               className="bg-slate-800 text-white hover:bg-slate-900"
               type="submit"
               disabled={form.formState.isSubmitting}
-              // onClick={onSaveChanges}
             >
               Guardar
             </Button>
@@ -541,6 +623,7 @@ const Project = () => {
                 <Calendar
                   handlerDay={handlerDay}
                   setCurrentActivityDay={setCurrentActivityDay}
+                  activity={currentActivity}
                 />
               </div>
               <div className="w-4/12 h-full flex flex-col">
@@ -582,13 +665,22 @@ const Project = () => {
                             size={24}
                             className="text-green-500 cursor-pointer"
                           />
-                          <PlusCircle
-                            size={24}
-                            className="text-blue-600 cursor-pointer"
-                          />
                           <Trash
                             size={24}
                             className="text-red-500 cursor-pointer"
+                            onClick={() => {
+                              if (typeof id === "string") {
+                                setLoading(true);
+                                const tasks = project.tasks.filter(
+                                  (t) => t.name !== task.name
+                                );
+
+                                updateDoc(doc(db, "habits", id), {
+                                  tasks,
+                                });
+                                setLoading(false);
+                              }
+                            }}
                           />
                         </div>
                       </div>
