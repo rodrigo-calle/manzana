@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/form/Form";
 import { Input } from "@/components/ui/input/Input";
 import { Textarea } from "@/components/ui/textArea/TextArea";
-import { Form, FormProvider, set, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -55,6 +55,7 @@ import { Trash } from "@phosphor-icons/react/dist/ssr/Trash";
 import { ArrowSquareOut, Pencil } from "@phosphor-icons/react";
 import CustomTooltip from "@/components/ui/tootip/Tooltip";
 import Link from "next/link";
+import { Project } from "@/types/types";
 
 type DialogProps = {
   open: boolean;
@@ -62,13 +63,6 @@ type DialogProps = {
   type: "new" | "edit";
   projectRef?: DocumentReference<DocumentData, DocumentData>;
   onClose: () => void;
-};
-
-type ProjectRegister = {
-  reference: DocumentReference<DocumentData, DocumentData>;
-  name: string;
-  description: string;
-  createdAt: Timestamp;
 };
 
 const RegisterProjectsDialog = (props: DialogProps) => {
@@ -247,7 +241,7 @@ const RegisterProjectsDialog = (props: DialogProps) => {
 
 const Projects = () => {
   const [userRef, setUserRef] = React.useState<DocumentReference>();
-  const [projects, setProjects] = React.useState<ProjectRegister[]>([]);
+  const [projects, setProjects] = React.useState<Project[]>([]);
   const router = useRouter();
   const [displayAlert, setDisplayAlert] = React.useState(false);
   const [user, loading, error] = useAuthState(auth);
@@ -300,15 +294,20 @@ const Projects = () => {
         const projectList = habits.docs.map((doc) => {
           const data = doc.data();
 
-          const dataToSave: ProjectRegister = {
-            reference: doc.ref,
+          const dataToSave: Project = {
+            user: doc.ref,
             name: data.name,
             description: data.description,
             createdAt: data.createdAt,
+            tasks: [],
           };
           return dataToSave;
         });
         setProjects(projectList);
+      } else {
+        setProjects([]);
+        setProjectsLoader(false);
+        return;
       }
       setProjectsLoader(false);
     };
@@ -360,7 +359,7 @@ const Projects = () => {
                     <CustomTooltip hover="Eliminar">
                       <Button
                         className="rounded-full w-9 h-9 p-0"
-                        onClick={() => deleteProject(project.reference)}
+                        onClick={() => deleteProject(project.user)}
                       >
                         <Trash size={24} className="text-red-400" />
                       </Button>
@@ -369,7 +368,7 @@ const Projects = () => {
                       <Button
                         className="rounded-full w-9 h-9 p-0"
                         onClick={() => {
-                          setProjectRef(project.reference);
+                          setProjectRef(project.user);
                           setOpenEdit(true);
                         }}
                       >
@@ -377,7 +376,7 @@ const Projects = () => {
                       </Button>{" "}
                     </CustomTooltip>
                     <CustomTooltip hover="Ver Hábito">
-                      <Link href={`/projects/${project.reference.id}`}>
+                      <Link href={`/projects/${project.user.id}`}>
                         <Button className="rounded-full w-9 h-9 p-0">
                           <ArrowSquareOut size={24} className="text-blue-400" />
                         </Button>

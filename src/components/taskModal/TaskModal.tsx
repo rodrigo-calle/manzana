@@ -245,6 +245,7 @@ const TaskModal = (props: TaskModalType) => {
                           <FormControl>
                             <Input
                               type="file"
+                              accept="image/*, video/*"
                               placeholder=""
                               {...field}
                               onChange={(event) => {
@@ -370,7 +371,7 @@ const TaskModal = (props: TaskModalType) => {
               </p>
             </div>
             <Button
-              className="bg-slate-50 text-black border border-bg-bg-slate-800 hover:bg-slate-100"
+              className="bg-slate-50 text-black border border-bg-bg-slate-800 hover:bg-slate-100 mr-2"
               onClick={() => setOpenTaskModal(!openTaskModal)}
             >
               Cancelar

@@ -1,6 +1,5 @@
 "use client";
 import Image from "next/image";
-import { getUser } from "@/config/authentication";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/config/firebase";
@@ -14,8 +13,10 @@ import {
 import { useDispatch } from "react-redux";
 import { removeSesion } from "@/redux/features/auth/authSlice/auth";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const MainNav = () => {
+  const [openDropDownMenu, setOpenDropDownMenu] = useState(false);
   const [user, _loading, _error] = useAuthState(auth);
   const dispatch = useDispatch();
   const router = useRouter();
@@ -40,7 +41,10 @@ const MainNav = () => {
       </Link>
       <div className="flex flex-row items-center w-11/12 justify-end">
         {user && (
-          <DropdownMenu>
+          <DropdownMenu
+            open={openDropDownMenu}
+            onOpenChange={setOpenDropDownMenu}
+          >
             <DropdownMenuTrigger className="border-none border-white">
               <div className="flex flex-row items-center justify-center gap-2">
                 <Image
@@ -54,12 +58,31 @@ const MainNav = () => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mr-8 rounded-md">
-              <DropdownMenuLabel onClick={() => router.push('/profile')}>Mi Perfil</DropdownMenuLabel>
-              <DropdownMenuLabel onClick={() => router.push('/projects')}>Mis Proyectos</DropdownMenuLabel>
+              <DropdownMenuLabel
+                className="cursor-pointer"
+                onClick={() => {
+                  setOpenDropDownMenu(!openDropDownMenu);
+                  router.push("/profile");
+                }}
+              >
+                Mi Perfil
+              </DropdownMenuLabel>
+              <DropdownMenuLabel
+                className="cursor-pointer"
+                onClick={() => {
+                  setOpenDropDownMenu(!openDropDownMenu);
+                  router.push("/projects");
+                }}
+              >
+                Mis Proyectos
+              </DropdownMenuLabel>
               <DropdownMenuSeparator className="w-10 border-b-slate-500" />
               <DropdownMenuLabel
                 className="cursor-pointer"
-                onClick={() => handleSignOut()}
+                onClick={() => {
+                  setOpenDropDownMenu(!openDropDownMenu);
+                  handleSignOut();
+                }}
               >
                 Cerrar Sesión
               </DropdownMenuLabel>

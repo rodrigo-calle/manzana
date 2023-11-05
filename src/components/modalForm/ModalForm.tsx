@@ -33,7 +33,6 @@ type ModalFormProps = {
 const ModalForm = (props: ModalFormProps) => {
   const params = useParams();
   const { openModal, setOpenModal, type } = props;
-  //   const cld = new Cloudinary({ cloud: { cloudName: "da7ov8jyp" } });
 
   const newProjectSchema = z.object({
     name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
@@ -74,6 +73,7 @@ const ModalForm = (props: ModalFormProps) => {
         tasks: [...projectData.tasks, newTask],
       });
     }
+    window.location.reload();
   };
 
   return (
