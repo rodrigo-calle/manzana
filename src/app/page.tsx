@@ -2,6 +2,7 @@
 import CustomAlert from "@/components/ui/alert/CustomAlert";
 import GoogleAuthButton from "@/components/ui/buttons/GoogleAuthButton";
 import Loader from "@/components/ui/loader/Loader";
+import useFullPageLoader from "@/components/ui/loader/useFullPageLoader";
 import { auth } from "@/config/firebase";
 import { saveSesion } from "@/redux/features/auth/authSlice/auth";
 import { useAppSelector } from "@/redux/hooks";
@@ -15,6 +16,7 @@ import { useDispatch } from "react-redux";
 export default function Home() {
   const [signInWithGoogle, _user, loading, error] = useSignInWithGoogle(auth);
   const [user, _loading, _error] = useAuthState(auth);
+  const [loader, showLoader, hideLoader] = useFullPageLoader();
 
   const [displayAlert, setDisplayAlert] = useState(false);
   const router = useRouter();
@@ -46,11 +48,15 @@ export default function Home() {
     }
   }, [dispatch, user, error, router]);
 
-  if (loading) {
+  if (loading && typeof showLoader === "function") {
+    // showLoader();
     return <Loader />;
   }
-  console.log({ user });
-  if (user) router.push("/projects");
+
+  if (user && typeof hideLoader === "function") {
+    // hideLoader();
+    router.push("/projects");
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-orange-40">
@@ -99,6 +105,7 @@ export default function Home() {
           )}
         </div>
       </div>
+      {/* {typeof loader !== "function" && loader && loader} */}
     </main>
   );
 }

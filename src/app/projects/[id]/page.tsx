@@ -14,13 +14,13 @@ import { useParams } from "next/navigation";
 import React from "react";
 import "./calendar.css";
 import Calendar from "@/components/calendar/Calendar";
-import Loader from "@/components/ui/loader/Loader";
 import { Button } from "@/components/ui/buttons/Button";
 import { Eye, Trash } from "@phosphor-icons/react";
 import TaskModal from "@/components/taskModal/TaskModal";
 import ModalForm from "@/components/modalForm/ModalForm";
 import ActivityPreview from "@/components/activityPreview/ActivityPreview";
 import { ActivitySubcollection, Project } from "@/types/types";
+import Loader from "@/components/ui/loader/Loader";
 
 const Project = () => {
   const params = useParams();
@@ -64,7 +64,7 @@ const Project = () => {
 
     getProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentActibityDay, setCurrentActivityDay]);
+  }, [currentActibityDay, setCurrentActivityDay, updateDoc]);
 
   if (loading) return <Loader />;
 

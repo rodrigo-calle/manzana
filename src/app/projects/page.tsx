@@ -246,7 +246,7 @@ const RegisterProjectsDialog = (props: DialogProps) => {
 };
 
 const Projects = () => {
-  const [userRef, setUseRef] = React.useState<DocumentReference>();
+  const [userRef, setUserRef] = React.useState<DocumentReference>();
   const [projects, setProjects] = React.useState<ProjectRegister[]>([]);
   const router = useRouter();
   const [displayAlert, setDisplayAlert] = React.useState(false);
@@ -275,7 +275,7 @@ const Projects = () => {
   React.useEffect(() => {
     if (user && user.email) {
       getUserReference(user.email).then((userRef) => {
-        setUseRef(userRef);
+        setUserRef(userRef);
       });
     }
 

@@ -3,6 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Providers from "@/redux/providers";
+import { Toaster } from "@/components/ui/toast/Toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
         <Providers>
           <MainNav />
           {children}
+          <Toaster />
         </Providers>
       </body>
     </html>

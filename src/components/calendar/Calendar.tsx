@@ -1,3 +1,4 @@
+"use client";
 import { db } from "@/config/firebase";
 import {
   Timestamp,
@@ -8,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { useParams } from "next/navigation";
 import React from "react";
+import { useToast } from "../ui/toast/useToast";
 
 type TaskList = {
   name: string;
@@ -113,6 +115,7 @@ const CalendarDays = (props: CalendarDay) => {
 };
 
 const Calendar = (props: CalendarProps) => {
+  const { toast } = useToast();
   const { handlerDay, openDialog, setCurrentActivityDay, setOpenDialog } =
     props;
   const [currentDay, setCurrentDay] = React.useState<Date>(new Date());
@@ -167,7 +170,11 @@ const Calendar = (props: CalendarProps) => {
     if (dateSelectedIsBeforeToTheCurrentDate) {
       setCurrentActivityDay(timestamp);
       if (!activity) {
-        alert("No registraste actividades en este día");
+        toast({
+          title: "No registraste actividades en este día",
+          description: "Por favor selecciona otro día",
+          className: "border border-blue-500 bg-blue-100 text-blue-700",
+        });
         return;
       }
       setOpenDialog(!openDialog);
@@ -175,7 +182,12 @@ const Calendar = (props: CalendarProps) => {
     }
 
     if (dateSelectedIsAfterToTheCurrentDate) {
-      alert("No puedes seleccionar un día que no ha llegado");
+      toast({
+        title: "No puedes seleccionar un día que no ha llegado",
+        description:
+          "Por favor selecciona un día que ya haya pasado para ver el historial de actividades o selecciona el día actual para registrar tus actividades de hoy",
+        className: "border border-blue-500 bg-blue-100 text-blue-700",
+      });
       return;
     }
     handlerDay(day.date);

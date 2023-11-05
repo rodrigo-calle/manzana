@@ -1,9 +1,11 @@
-const Loader = () => {
+import React from "react";
+
+const FullPageLoader = () => {
   return (
-    <div className="h-screen w-screen relative items-center block  p-6 rounded-lg bg-slate-100 bg-opacity-95">
+    <div className="fixed h-screen w-full top-0 left-0 bg-slate-400 bg-opacity-20">
       <div
         role="status"
-        className="absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2 flex items-center justify-center flex-col"
+        className="absolute -translate-x-1/2 -translate-y-1/2 top-2/4 left-1/2 flex flex-col items-center justify-center"
       >
         <svg
           aria-hidden="true"
@@ -21,9 +23,10 @@ const Loader = () => {
             fill="currentFill"
           />
         </svg>
-        <p className="">Cargando...</p>
+        <p>Cargando...</p>
       </div>
     </div>
   );
 };
-export default Loader;
+
+export default FullPageLoader;
