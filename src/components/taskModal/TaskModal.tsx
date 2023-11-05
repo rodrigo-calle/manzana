@@ -42,6 +42,7 @@ import {
 import { X } from "@phosphor-icons/react";
 import { Button } from "../ui/buttons/Button";
 import { Textarea } from "../ui/textArea/TextArea";
+import { toast } from "../ui/toast/useToast";
 
 type TaskList = {
   name: string;
@@ -183,11 +184,23 @@ const TaskModal = (props: TaskModalType) => {
         activityId
       );
       await setDoc(activityRef, subcollectionActivity, { merge: true });
+      toast({
+        title: "Actividad actualizada",
+        description: "La actividad se actualizó correctamente",
+        className: "border border-green-500 bg-green-100 text-green-700",
+      });
+      setOpenTaskModal(!openTaskModal);
       return;
     }
 
     const activityRef = doc(db, "habits", projectId, "activities", idv4);
     await setDoc(activityRef, subcollectionActivity);
+    toast({
+      title: "Actividad creada",
+      description: "La actividad se creó correctamente",
+      className: "border border-green-500 bg-green-100 text-green-700",
+    });
+    setOpenTaskModal(!openTaskModal);
   };
 
   return (
