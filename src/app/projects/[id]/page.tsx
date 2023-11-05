@@ -93,6 +93,85 @@ type TaskModalType = {
   setOpenTaskModal: (openTaskModal: boolean) => void;
 };
 
+type ActivityPreviewProps = ActivitySubcollection & {
+  openDialog: boolean;
+  setOpenDialog: (openDialog: boolean) => void;
+};
+
+const ActivityPreview = (props: ActivityPreviewProps) => {
+  const { activities, media, notes, date, setOpenDialog, openDialog } = props;
+
+  const reabableDay = new Date(date.toDate()).toLocaleDateString();
+
+  return (
+    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+      <DialogContent className="bg-white">
+        <DialogHeader>
+          <DialogTitle>Actividad del día {reabableDay}</DialogTitle>
+          <DialogDescription>
+            Las actividades realizadas en este día.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="w-full h-fit flex flex-col">
+          <p className="">¿Qué actividades Hiciste?</p>
+          <div className="w-full flex flex-row flex-wrap gap-2 mt-3">
+            {activities.map((task, index) => {
+              return (
+                <div
+                  key={index}
+                  className="flex flex-row justify-between items-center w-fit p-2 bg-blue-200 gap-2 flex-wrap mt-3 ml-3  "
+                >
+                  <p className="text-blue-700">{task.name}</p>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-3">Notas del día:</p>
+          <p className="text-gray-500">{notes}</p>
+          <p className="mt-3">Imagenes o videos del día:</p>
+          <div className="w-full cursor-zoom-in flex flex-row flex-wrap gap-2 mt-3">
+            {media.map((file, index) => {
+              if (file.type.includes("image")) {
+                return (
+                  <Image
+                    key={index}
+                    src={file.url}
+                    alt="Picture of the author"
+                    width={100}
+                    height={100}
+                    className="h-32 w-32 object-cover"
+                  />
+                );
+              } else {
+                return (
+                  <video key={index} className="cursor-zoom-in">
+                    <source
+                      src={file.url}
+                      width={100}
+                      height={100}
+                      className="h-32 w-32 object-cover"
+                      type={file.type}
+                    />
+                  </video>
+                );
+              }
+            })}
+          </div>
+        </div>
+      </DialogContent>
+      <DialogFooter className="">
+        <Button
+          className="bg-slate-800 text-white hover:bg-slate-900"
+          type="submit"
+          onClick={() => setOpenDialog(!openDialog)}
+        >
+          Ok
+        </Button>
+      </DialogFooter>
+    </Dialog>
+  );
+};
+
 const ModalForm = (props: ModalFormProps) => {
   const params = useParams();
   const { openModal, setOpenModal, type } = props;
@@ -328,8 +407,6 @@ const TaskModal = (props: TaskModalType) => {
   const onSaveChanges = async (values: z.infer<typeof dayActivitySchema>) => {
     if (!currentActivity) return;
 
-    console.log({ values, t: values.media.length });
-
     const subcollectionActivity: ActivitySubcollection = {
       activities: currentActivity?.activities,
       notes: currentActivity?.notes || values.notes,
@@ -424,8 +501,6 @@ const TaskModal = (props: TaskModalType) => {
                                   getImageData(event);
 
                                 Array.from(files).map((file: any) => {
-                                  console.log({ file, x: typeof file });
-
                                   const formData = new FormData();
                                   formData.append("file", file);
                                   formData.append(
@@ -451,7 +526,6 @@ const TaskModal = (props: TaskModalType) => {
                                     .then((response) => {
                                       const data = response.data;
                                       const fileUrl = data.secure_url;
-                                      console.log(fileUrl);
                                       setFileDataPreview((prev) => [
                                         ...prev,
                                         {
@@ -577,6 +651,8 @@ const Project = () => {
   const [currentActibityDay, setCurrentActivityDay] = React.useState<Timestamp>(
     Timestamp.now()
   );
+  const [openPreviewActivityDialog, setOpenPreviewActivityDialog] =
+    React.useState<boolean>(false);
 
   React.useEffect(() => {
     const getProject = async (): Promise<void> => {
@@ -596,6 +672,8 @@ const Project = () => {
           const activity =
             querySnapshot.docs[0].data() as ActivitySubcollection;
           setCurrentActivity(activity);
+        } else {
+          setCurrentActivity(null);
         }
       }
       setLoading(false);
@@ -603,7 +681,7 @@ const Project = () => {
 
     getProject();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentActibityDay]);
+  }, [currentActibityDay, setCurrentActivityDay]);
 
   if (loading) return <Loader />;
 
@@ -624,6 +702,8 @@ const Project = () => {
                   handlerDay={handlerDay}
                   setCurrentActivityDay={setCurrentActivityDay}
                   activity={currentActivity}
+                  openDialog={openPreviewActivityDialog}
+                  setOpenDialog={setOpenPreviewActivityDialog}
                 />
               </div>
               <div className="w-4/12 h-full flex flex-col">
@@ -690,6 +770,13 @@ const Project = () => {
               </div>
             </div>
           </div>
+          {currentActivity && (
+            <ActivityPreview
+              {...currentActivity}
+              openDialog={openPreviewActivityDialog}
+              setOpenDialog={setOpenPreviewActivityDialog}
+            />
+          )}
           <TaskModal
             openTaskModal={openTaskModal}
             setOpenTaskModal={setOpenTaskModal}

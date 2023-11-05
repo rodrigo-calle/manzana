@@ -1,4 +1,12 @@
-import { Timestamp } from "firebase/firestore";
+import { db } from "@/config/firebase";
+import {
+  Timestamp,
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import { useParams } from "next/navigation";
 import React from "react";
 
 type TaskList = {
@@ -21,6 +29,8 @@ type CalendarProps = {
   handlerDay: (day: Date) => void;
   setCurrentActivityDay: (day: Timestamp) => void;
   activity: ActivitySubcollection | null;
+  openDialog: boolean;
+  setOpenDialog: (open: boolean) => void;
 };
 
 type CalendarBodyDay = {
@@ -86,7 +96,11 @@ const CalendarDays = (props: CalendarDay) => {
               (new Date(day.date.toDateString()) <
               new Date(currentDay.toDateString())
                 ? " cursor-zoom-in bg-slate-300"
-                : " cursor-pointer")
+                : " cursor-pointer") +
+              (new Date(day.date.toDateString()) >
+              new Date(currentDay.toDateString())
+                ? " cursor-not-allowed bg-slate-300"
+                : "")
             }
             onClick={() => changeCurrentDay(day)}
           >
@@ -99,7 +113,11 @@ const CalendarDays = (props: CalendarDay) => {
 };
 
 const Calendar = (props: CalendarProps) => {
+  const { handlerDay, openDialog, setCurrentActivityDay, setOpenDialog } =
+    props;
   const [currentDay, setCurrentDay] = React.useState<Date>(new Date());
+  const params = useParams();
+  const { id } = params;
   const weekDays = [
     "Domingo",
     "Lunes",
@@ -129,14 +147,39 @@ const Calendar = (props: CalendarProps) => {
     const dayParsed = new Date(day.date.toDateString());
     const currentDayParsed = new Date(currentDay.toDateString());
     const dateSelectedIsBeforeToTheCurrentDate = dayParsed < currentDayParsed;
-    if (dateSelectedIsBeforeToTheCurrentDate) return;
-    props.handlerDay(day.date);
-    // date to firestore timestamp
+    const dateSelectedIsAfterToTheCurrentDate = dayParsed > currentDayParsed;
     const timestamp = Timestamp.fromDate(day.date);
-    // firestore timestamp to date
-    const date = timestamp.toDate();
-    // console.log({ date, timestamp });
-    props.setCurrentActivityDay(timestamp);
+
+    let activity: ActivitySubcollection | null = null;
+
+    if (typeof id === "string") {
+      const q = query(
+        collection(db, "habits", id, "activities"),
+        where("date", "==", timestamp)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        activity = querySnapshot.docs[0].data() as ActivitySubcollection;
+      }
+    }
+
+    if (dateSelectedIsBeforeToTheCurrentDate) {
+      setCurrentActivityDay(timestamp);
+      if (!activity) {
+        alert("No registraste actividades en este día");
+        return;
+      }
+      setOpenDialog(!openDialog);
+      return;
+    }
+
+    if (dateSelectedIsAfterToTheCurrentDate) {
+      alert("No puedes seleccionar un día que no ha llegado");
+      return;
+    }
+    handlerDay(day.date);
+    setCurrentActivityDay(timestamp);
     setCurrentDay(new Date(day.year, day.month, day.number));
   };
 
