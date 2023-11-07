@@ -349,45 +349,47 @@ const Projects = () => {
             userRef &&
             projects.length > 0 &&
             projects.map((project, index) => (
-              <li className="w-72 h-fit" key={index}>
-                <Card className="h-full bg-white">
-                  <CardHeader>
-                    <CardTitle>{project.name}</CardTitle>
-                    <p className="text-sm text-gray-400">
-                      {project.createdAt.toDate().toLocaleDateString("es-CO")}
-                    </p>
-                    <CardDescription>{project.description}</CardDescription>
-                  </CardHeader>
-                  <CardFooter className="flex w-full flex-row justify-end gap-2">
-                    <CustomTooltip hover="Eliminar">
-                      <Button
-                        className="rounded-full w-9 h-9 p-0"
-                        onClick={() => deleteProject(project.user)}
-                      >
-                        <Trash size={24} className="text-red-400" />
-                      </Button>
-                    </CustomTooltip>
-                    <CustomTooltip hover="Editar">
-                      <Button
-                        className="rounded-full w-9 h-9 p-0"
-                        onClick={() => {
-                          setProjectRef(project.user);
-                          setOpenEdit(true);
-                        }}
-                      >
-                        <Pencil size={24} className="text-green-400" />
-                      </Button>{" "}
-                    </CustomTooltip>
-                    <CustomTooltip hover="Ver Hábito">
-                      <Link href={`/projects/${project.user.id}`}>
-                        <Button className="rounded-full w-9 h-9 p-0">
-                          <ArrowSquareOut size={24} className="text-blue-400" />
+              <Link key={index} href={`/projects/${project.user.id}`} className="cursor-pointer">
+                <li className="w-72 h-fit">
+                  <Card className="h-full bg-white">
+                    <CardHeader>
+                      <CardTitle>{project.name}</CardTitle>
+                      <CardDescription>{project.description}</CardDescription>
+                    </CardHeader>
+                    <CardFooter className="flex w-full flex-row justify-end gap-2">
+                      <CustomTooltip hover="Eliminar">
+                        <Button
+                          className="rounded-full w-9 h-9 p-0"
+                          onClick={() => deleteProject(project.user)}
+                        >
+                          <Trash size={24} className="text-red-400" />
                         </Button>
-                      </Link>
-                    </CustomTooltip>
-                  </CardFooter>
-                </Card>
-              </li>
+                      </CustomTooltip>
+                      <CustomTooltip hover="Editar">
+                        <Button
+                          className="rounded-full w-9 h-9 p-0"
+                          onClick={() => {
+                            setProjectRef(project.user);
+                            setOpenEdit(true);
+                          }}
+                        >
+                          <Pencil size={24} className="text-green-400" />
+                        </Button>{" "}
+                      </CustomTooltip>
+                      <CustomTooltip hover="Ver Hábito">
+                        <Link href={`/projects/${project.user.id}`}>
+                          <Button className="rounded-full w-9 h-9 p-0">
+                            <ArrowSquareOut
+                              size={24}
+                              className="text-blue-400"
+                            />
+                          </Button>
+                        </Link>
+                      </CustomTooltip>
+                    </CardFooter>
+                  </Card>
+                </li>
+              </Link>
             ))}{" "}
           {projectsLoader && (
             <div className="w-full h-full flex justify-center items-center">
