@@ -71,7 +71,7 @@ const RegisterProjectsDialog = (props: DialogProps) => {
 
   const newProjectSchema = z.object({
     name: z.string().min(3, "Too Short!").max(50, "Too Long!"),
-    description: z.string().min(3, "Too Short!").max(50, "Too Long!"),
+    description: z.string().min(3, "Too Short!").max(100, "Too Long!"),
   });
 
   const form = useForm<z.infer<typeof newProjectSchema>>({
@@ -181,10 +181,10 @@ const RegisterProjectsDialog = (props: DialogProps) => {
                           name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Nombre de hábito</FormLabel>
+                              <FormLabel>Nombre de proyecto</FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Alimentación saludable"
+                                  placeholder="Leer Hábitos Atómicos"
                                   {...field}
                                 />
                               </FormControl>
@@ -208,10 +208,10 @@ const RegisterProjectsDialog = (props: DialogProps) => {
                           name="description"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Descripción del hábito</FormLabel>
+                              <FormLabel>Descripción del proyecto</FormLabel>
                               <FormControl>
                                 <Textarea
-                                  placeholder="Alimentación saludable"
+                                  placeholder="Leer hábitos atómicos para comenzar a crear hábitos de forma correcta"
                                   {...field}
                                 />
                               </FormControl>
@@ -353,6 +353,9 @@ const Projects = () => {
                 <Card className="h-full bg-white">
                   <CardHeader>
                     <CardTitle>{project.name}</CardTitle>
+                    <p className="text-sm text-gray-400">
+                      {project.createdAt.toDate().toLocaleDateString("es-CO")}
+                    </p>
                     <CardDescription>{project.description}</CardDescription>
                   </CardHeader>
                   <CardFooter className="flex w-full flex-row justify-end gap-2">

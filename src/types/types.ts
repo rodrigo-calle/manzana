@@ -34,6 +34,6 @@ export interface Project {
   user: DocumentReference;
   name: string;
   description: string;
-  createdAt: string;
+  createdAt: Timestamp;
   tasks: TaskList;
 }
